@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<style>
+  :root {
+    --bg: #14181c;
+    --panel: #1c2228;
+    --display-fg: #eef2f5;
+    --key-bg: #262e36;
+    --key-fg: #eef2f5;
+    --key-hover: #303a44;
+    --op-bg: #2f6f6b;
+    --op-hover: #37827d;
+    --op-fg: #eafffb;
+    --equals-bg: #52c7a8;
+    --equals-hover: #63d4b6;
+    --equals-fg: #0d1512;
+    --func-bg: #333c46;
+    --func-fg: #b9c3cc;
+    --danger-fg: #ff8a7a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    padding: clamp(12px, 4vw, 32px);
+  }
+
+  .calculator {
+    width: min(360px, 100%);
+    background: var(--panel);
+    border-radius: 28px;
+    padding: clamp(16px, 4vw, 24px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 20px 12px 12px;
+    min-height: 100px;
+    overflow: hidden;
+  }
+
+  .expression {
+    color: #7c8894;
+    font-size: clamp(0.85rem, 2.2vw, 1rem);
+    min-height: 1.2em;
+    white-space: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+  .expression::-webkit-scrollbar { display: none; }
+
+  .result {
+    color: var(--display-fg);
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    font-weight: 300;
+    white-space: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    letter-spacing: 0.5px;
+    scrollbar-width: none;
+  }
+  .result::-webkit-scrollbar { display: none; }
+  .result.error { color: var(--danger-fg); font-size: clamp(1.4rem, 5vw, 1.8rem); }
+
+  .keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  button {
+    border: none;
+    border-radius: 16px;
+    font-size: clamp(1.1rem, 4vw, 1.35rem);
+    font-family: inherit;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: var(--key-bg);
+    color: var(--key-fg);
+    transition: transform 0.06s ease, background 0.15s ease, filter 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:hover { background: var(--key-hover); }
+  button:active { transform: scale(0.94); filter: brightness(0.95); }
+  button:focus-visible { outline: 2px solid var(--equals-bg); outline-offset: 2px; }
+
+  .fn { background: var(--func-bg); color: var(--func-fg); font-size: clamp(0.95rem, 3.4vw, 1.1rem); }
+  .fn:hover { background: #3c4753; }
+
+  .op { background: var(--op-bg); color: var(--op-fg); }
+  .op:hover { background: var(--op-hover); }
+  .op.active { outline: 2px solid var(--equals-bg); outline-offset: -2px; }
+
+  .equals { background: var(--equals-bg); color: var(--equals-fg); font-weight: 600; }
+  .equals:hover { background: var(--equals-hover); }
+
+  .span2 { grid-column: span 2; aspect-ratio: auto; justify-content: flex-start; padding-left: 26px; }
+
+  .hint {
+    text-align: center;
+    color: #4d5761;
+    font-size: 0.72rem;
+    margin-top: 14px;
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="calculator">
+  <div class="display">
+    <div class="expression" id="expression">&nbsp;</div>
+    <div class="result" id="result">0</div>
+  </div>
+
+  <div class="keys">
+    <button class="fn" data-action="clear" id="clearBtn">AC</button>
+    <button class="fn" data-action="backspace" aria-label="Backspace">⌫</button>
+    <button class="fn" data-action="percent">%</button>
+    <button class="op" data-op="÷">÷</button>
+
+    <button class="key" data-num="7">7</button>
+    <button class="key" data-num="8">8</button>
+    <button class="key" data-num="9">9</button>
+    <button class="op" data-op="×">×</button>
+
+    <button class="key" data-num="4">4</button>
+    <button class="key" data-num="5">5</button>
+    <button class="key" data-num="6">6</button>
+    <button class="op" data-op="−">−</button>
+
+    <button class="key" data-num="1">1</button>
+    <button class="key" data-num="2">2</button>
+    <button class="key" data-num="3">3</button>
+    <button class="op" data-op="+">+</button>
+
+    <button class="key span2" data-num="0">0</button>
+    <button class="key" data-action="decimal">.</button>
+    <button class="equals" data-action="equals">=</button>
+  </div>
+
+  <div class="hint">Keyboard supported: numbers, + − * /, Enter, Backspace, Esc</div>
+</div>
+
+<script>
+(function () {
+  const resultEl = document.getElementById('result');
+  const expressionEl = document.getElementById('expression');
+  const clearBtn = document.getElementById('clearBtn');
+
+  let current = '0';        // string shown on the main display
+  let previous = null;      // stored operand as a number
+  let pendingOp = null;     // '+', '−', '×', '÷'
+  let overwrite = true;     // true = next digit press replaces the display
+  let isError = false;
+
+  const MAX_DIGITS = 12;
+
+  function formatNumber(n) {
+    if (!isFinite(n)) return 'Error';
+    // Round to avoid floating point noise (e.g. 0.1 + 0.2)
+    let rounded = parseFloat(n.toPrecision(12));
+    let str = rounded.toString();
+    if (str.length > MAX_DIGITS && str.includes('.')) {
+      // trim decimal places to fit
+      const intLen = Math.floor(rounded).toString().length;
+      const decimals = Math.max(0, MAX_DIGITS - intLen - 1);
+      str = rounded.toFixed(decimals).replace(/\.?0+$/, '');
+      if (str === '' || str === '-') str = '0';
+    }
+    if (Math.abs(rounded) >= 1e12 || (Math.abs(rounded) < 1e-9 && rounded !== 0)) {
+      str = rounded.toExponential(5);
+    }
+    return str;
+  }
+
+  function updateDisplay() {
+    resultEl.textContent = current;
+    resultEl.classList.toggle('error', isError);
+    if (pendingOp && previous !== null) {
+      expressionEl.textContent = `${formatNumber(previous)} ${pendingOp}`;
+    } else {
+      expressionEl.textContent = '\u00A0';
+    }
+    document.querySelectorAll('.op').forEach(b => {
+      b.classList.toggle('active', b.dataset.op === pendingOp && !overwrite);
+    });
+  }
+
+  function inputDigit(d) {
+    if (isError) resetAll();
+    if (overwrite) {
+      current = d;
+      overwrite = false;
+    } else {
+      if (current.replace('-', '').length >= MAX_DIGITS) return;
+      current = current === '0' ? d : current + d;
+    }
+    updateDisplay();
+  }
+
+  function inputDecimal() {
+    if (isError) resetAll();
+    if (overwrite) {
+      current = '0.';
+      overwrite = false;
+      updateDisplay();
+      return;
+    }
+    if (!current.includes('.')) {
+      current += '.';
+      updateDisplay();
+    }
+  }
+
+  function clearAll() {
+    resetAll();
+    updateDisplay();
+  }
+
+  function resetAll() {
+    current = '0';
+    previous = null;
+    pendingOp = null;
+    overwrite = true;
+    isError = false;
+  }
+
+  function backspace() {
+    if (isError) { resetAll(); updateDisplay(); return; }
+    if (overwrite) return;
+    current = current.length > 1 ? current.slice(0, -1) : '0';
+    if (current === '-' ) current = '0';
+    if (current === '0') overwrite = true;
+    updateDisplay();
+  }
+
+  function percent() {
+    if (isError) return;
+    const val = parseFloat(current);
+    current = formatNumber(val / 100);
+    overwrite = true;
+    updateDisplay();
+  }
+
+  function compute(a, b, op) {
+    switch (op) {
+      case '+': return a + b;
+      case '−': return a - b;
+      case '×': return a * b;
+      case '÷':
+        if (b === 0) return NaN; // triggers error state via formatNumber/isFinite check
+        return a / b;
+      default: return b;
+    }
+  }
+
+  function chooseOperator(op) {
+    if (isError) return;
+    const value = parseFloat(current);
+
+    if (pendingOp && !overwrite) {
+      // chain: evaluate what's pending before applying the new operator
+      const outcome = compute(previous, value, pendingOp);
+      if (!isFinite(outcome)) {
+        showError();
+        return;
+      }
+      previous = outcome;
+      current = formatNumber(outcome);
+    } else {
+      previous = value;
+    }
+
+    pendingOp = op;
+    overwrite = true;
+    updateDisplay();
+  }
+
+  function showError() {
+    isError = true;
+    current = 'Error';
+    previous = null;
+    pendingOp = null;
+    overwrite = true;
+    updateDisplay();
+  }
+
+  function equals() {
+    if (isError) return;
+    if (pendingOp === null) return;
+    const value = parseFloat(current);
+    const outcome = compute(previous, value, pendingOp);
+    if (!isFinite(outcome)) {
+      showError();
+      return;
+    }
+    current = formatNumber(outcome);
+    previous = null;
+    pendingOp = null;
+    overwrite = true;
+    updateDisplay();
+  }
+
+  // --- Wire up click events ---
+  document.querySelectorAll('[data-num]').forEach(btn => {
+    btn.addEventListener('click', () => inputDigit(btn.dataset.num));
+  });
+  document.querySelectorAll('[data-op]').forEach(btn => {
+    btn.addEventListener('click', () => chooseOperator(btn.dataset.op));
+  });
+  document.querySelector('[data-action="decimal"]').addEventListener('click', inputDecimal);
+  document.querySelector('[data-action="equals"]').addEventListener('click', equals);
+  document.querySelector('[data-action="backspace"]').addEventListener('click', backspace);
+  document.querySelector('[data-action="percent"]').addEventListener('click', percent);
+  clearBtn.addEventListener('click', clearAll);
+
+  // --- Keyboard support ---
+  const opMap = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  window.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') { inputDigit(e.key); return; }
+    if (e.key === '.') { inputDecimal(); return; }
+    if (opMap[e.key]) { chooseOperator(opMap[e.key]); return; }
+    if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); equals(); return; }
+    if (e.key === 'Backspace') { backspace(); return; }
+    if (e.key === 'Escape') { clearAll(); return; }
+    if (e.key === '%') { percent(); return; }
+  });
+
+  updateDisplay();
+})();
+</script>
+
+</body>
+</html>
